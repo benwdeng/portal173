@@ -1,0 +1,178 @@
+###################################################################################################
+#
+# Portal 173 - Overview: Create new matter
+#
+###################################################################################################
+
+view_edit_matter_ui <- function(ns){
+  fluidRow(
+    bsModal(
+      id = ns("view_edit_matter_pop_up"),          # Name of the modal 
+      title = "View/Edit matter",                  # Title of the modal
+      trigger = "view_edit_matter",                   # The button that triggers the modal
+      
+      fluidPage(
+        column(
+          width = 8, offset = 2,
+          fluidRow(
+            h6("* denotes required field", align = "right"),
+          ),
+          uiOutput(ns("view_edit_information_details_ui")),
+          uiOutput(ns("view_edit_matter_submit_log_ui"))
+        )
+      )
+    )
+  )  
+}
+
+
+view_edit_matter_server <- function(session, input, output, view_edit_matter, values){
+  dataPostCodeMapping <- as.data.table(read.csv("inputs/australian_postcodes.csv"))
+  
+  observeEvent(view_edit_matter(), {
+    s <- input$all_matters_rows_selected
+    if(!is.null(s)){
+      toggleModal(session, modalId = "view_edit_matter_pop_up", toggle = "toggle")
+    } else {
+      shinyalert(paste0("No matters selected"), type = "warning")
+    }
+  })
+  
+  #### START - Information to show ----------------------------------
+  output$view_edit_information_details_ui <- renderUI({
+    s <- input$all_matters_rows_selected
+    selected_matter_id_edit <- filtereddataOverview()[s, matter_id]
+    fluidRow(
+      textAreaInput(
+        inputId = session$ns("view_edit_subject_land_address"), 
+        label = "Subject land address: *", 
+        placeholder = "Enter the address of the subject land",
+        width = "100%",
+        value = filtereddataOverview()[matter_id %in% selected_matter_id_edit, address]
+      ),
+      selectizeInput(
+        inputId = session$ns("view_edit_address_postcode"),
+        label = "Postcode: *",
+        choices = NULL,
+        selected = filtereddataOverview()[matter_id %in% selected_matter_id_edit, address_postcode],
+        multiple = TRUE,
+        width = "100%",
+        options = list(maxItems = 1,
+                       placeholder = 'Postcode for subject land' # Placeholder text
+        )
+      ),
+      textAreaInput(
+        inputId = session$ns("view_edit_client_name"), 
+        label = "Client name: *", 
+        placeholder = "Enter the client's full name",
+        width = "100%",
+        value = filtereddataOverview()[matter_id %in% selected_matter_id_edit, client_name]
+      ),
+      
+      textAreaInput(
+        inputId = session$ns("view_edit_contact_number"), 
+        label = "Client contact number: ", 
+        placeholder = "Enter client contact number",
+        width = "100%",
+        value = filtereddataOverview()[matter_id %in% selected_matter_id_edit, client_contact_number]
+      ),
+      
+      textAreaInput(
+        inputId = session$ns("view_edit_email_address"), 
+        label = "Client email address ", 
+        placeholder = "Enter client email address",
+        width = "100%",
+        value = filtereddataOverview()[matter_id %in% selected_matter_id_edit, client_email]
+      ),
+      
+      selectizeInput(
+        inputId = session$ns("view_edit_status"),
+        label = "Status: *",
+        choices = status_choices,
+        selected = filtereddataOverview()[matter_id %in% selected_matter_id_edit, status_of_matter],
+        multiple = TRUE,
+        width = "100%",
+        options = list(maxItems = 1,
+                       placeholder = 'Select the action status' # Placeholder text
+                       )
+      ),
+      selectizeInput(
+        inputId = session$ns("view_edit_type"),
+        label = "Type of matter: *",
+        choices = type_of_agreement,
+        selected = filtereddataOverview()[matter_id %in% selected_matter_id_edit, matter_type],
+        multiple = TRUE,
+        width = "100%",
+        options = list(maxItems = 1,
+                       placeholder = 'Select the type of agreement' # Placeholder text
+        )
+      ),
+      dateInput(
+        inputId = session$ns("view_edit_permit_expiry_date"), 
+        label = "Permit expiry date:", 
+        value = filtereddataOverview()[matter_id %in% selected_matter_id_edit, permit_expiry_date],
+        format = "yyyy-mm-dd",
+        startview = "month",
+        width = "100%"
+      )
+    )
+  })
+  #### END - Information to show ----------------------------------
+  
+  # Updating list of postcodes when subject address exist
+  observeEvent(input$view_edit_subject_land_address, {
+    s <- input$all_matters_rows_selected
+    selected_matter_id_edit <- filtereddataOverview()[s, matter_id]
+    if(isTRUE(length(input$view_edit_address_postcode) == 0)){
+      updateSelectizeInput(
+        session,
+        inputId = 'view_edit_address_postcode',
+        choices = dataPostCodeMapping[, sprintf("%04d", unique(postcode))],
+        selected = filtereddataOverview()[matter_id %in% selected_matter_id_edit, address_postcode],
+        server = TRUE
+      )
+    }
+  })
+
+  
+  output$view_edit_matter_submit_log_ui <- renderUI({
+    fluidRow(
+      actionButton(
+        inputId = session$ns("edit_matter_submit"), 
+        label = "Save changes"
+      )
+    )
+  })
+  
+  observeEvent(
+    input$edit_matter_submit, 
+    ignoreInit = TRUE, 
+    {
+      s <- input$all_matters_rows_selected
+      selected_matter_id_edit <- filtereddataOverview()[s, matter_id]
+      
+      entry <- data.table(
+        unique_id = filtereddataOverview()[matter_id %in% selected_matter_id_edit, unique_id],
+        matter_id = selected_matter_id_edit,
+        address = input$view_edit_subject_land_address,
+        address_postcode = ifelse(is.null(input$view_edit_address_postcode), as.character(NA), input$view_edit_address_postcode),
+        client_name = input$view_edit_client_name,
+        client_contact_number = input$view_edit_contact_number,
+        client_email = input$view_edit_email_address,
+        matter_created_date = Sys.time(),
+        matter_type = input$view_edit_type,
+        permit_expiry_date = input$view_edit_permit_expiry_date,
+        status_of_matter = input$view_edit_status,
+        last_modified_date = Sys.time()
+      )
+      
+      # Combine with table and save in path
+      adjusted_fact_matter <- rbind(values$fact_matter()[matter_id != selected_matter_id_edit], entry)
+      saveRDS(object = adjusted_fact_matter, file = path_file_fact_matter)
+      
+      # Close the modal -------------------------------------------------
+      toggleModal(session, modalId = "view_edit_matter_pop_up", toggle = "close")
+      shinyalert(paste0("Matter ", entry[, matter_id]," updated!"), type = "success")
+    }
+  )
+}
