@@ -7,7 +7,6 @@
 library(shiny)
 library(shinydashboard)
 
-
 fluidPage(
   shiny::singleton(
     shiny::tags$head(

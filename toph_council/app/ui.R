@@ -7,6 +7,9 @@
 library(shiny)
 library(shinydashboard)
 
+source("global.R")
+
+dataCouncilInfo <- data.table(read.csv(path_input_council_info, fileEncoding = 'UTF-8-BOM'))
 
 fluidPage(
   shiny::singleton(
@@ -17,7 +20,15 @@ fluidPage(
       tags$script(src="https://www.gstatic.com/firebasejs/5.7.0/firebase-app.js"),
       tags$script(src="https://www.gstatic.com/firebasejs/5.7.0/firebase-auth.js"),
       tags$script(src="https://www.gstatic.com/firebasejs/6.1.0/firebase-storage.js"),
-      shiny::tags$script(src="sof-auth.js")
+      shiny::tags$script(src="sof-auth.js"),
+      tags$style(HTML("
+        .main-header .logo {
+          float: left; /* Align logo to the left */
+        }
+        .main-header .navbar {
+          margin-left: 0; /* Remove margin if needed */
+        }
+      "))
     )
   ),
 
@@ -42,7 +53,7 @@ fluidPage(
             '<span class="logo-mini">{META$logo_mini}</span>
             <span class="logo-lg">{META$logo_lg}</span>'
           )),
-          titleWidth = "300",
+          titleWidth = "600",
           ui_settingsButton()
         ),
         
@@ -52,7 +63,7 @@ fluidPage(
             id = "tabs",
             menuItem("Overview", tabName = "tab_overview", icon = icon("tachometer-alt")),
             menuItem("Permit holder", tabName = "tab_permitholder", icon = icon("pencil-alt")),
-            menuItem("Draft forms", tabName = "tab_section173", icon = icon("stream")),
+            #menuItem("Draft forms", tabName = "tab_section173", icon = icon("stream")),
             menuItem("About us", tabName = "tab_about", icon = icon("info"))
           ),
           collapsed = FALSE
@@ -68,7 +79,7 @@ fluidPage(
             # Front page - tab_dashboard -----------------------------------------------
             tabItem("tab_overview", mod_overview_ui("overview_tab")),
             tabItem("tab_permitholder", mod_permitholder_ui("permitholder_tab")),
-            tabItem("tab_section173", mod_portal173_ui("portal173_tab")),
+            #tabItem("tab_section173", mod_portal173_ui("portal173_tab")),
             tabItem("tab_about", mod_about_us_ui("about_us_tab"))
           ),
           mod_settings_button(id = "settings_mod"),
@@ -79,6 +90,8 @@ fluidPage(
     )
   )
 )
+
+
 
 
 
