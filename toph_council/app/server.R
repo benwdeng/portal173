@@ -43,6 +43,7 @@ server <- function(input, output, session) {
   # that has signed in through Firebase.  A value of NULL will be used if the user is not
   # signed in
   session$userData$current_user <- reactiveVal(NULL)
+  session$userData$user_email <- reactiveVal(NULL)
 
   # input$sof_auth_user comes from front end js in "www/sof-auth.js"
   observeEvent(input$sof_auth_user, {
@@ -50,6 +51,7 @@ server <- function(input, output, session) {
     # set the signed in user
     session$userData$current_user(input$sof_auth_user)
     if(isTRUE(length(input$sof_auth_user$email) > 0)){
+      session$userData$user_email(input$sof_auth_user$email)
       refreshAllTables(session, session$userData$current_user()$stsTokenManager$accessToken)
       click("document_list_button_js", asis = TRUE)
       shinyalert(paste0("Logged in as ", input$sof_auth_user$email), type = "info")
@@ -58,7 +60,6 @@ server <- function(input, output, session) {
     }
     
   }, ignoreNULL = FALSE, ignoreInit = TRUE)
-
 
   ##### App for signed in user
   signed_in_user_df <- reactive({

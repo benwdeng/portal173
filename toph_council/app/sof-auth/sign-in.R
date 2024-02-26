@@ -11,6 +11,21 @@ div(
     class = "form-group",
     style = "width: 100%",
     tags$label(
+      tagList(icon("envelope"), "Council"),
+      `for` = "council"
+    ),
+    selectInput(
+      inputId = "council",
+      label = NULL,
+      choices = c("Select a council", dataCouncilInfo[, unique(Council)]), # Update with actual council names
+      selected = "Select a council"
+    )
+  ),
+  br(),
+  div(
+    class = "form-group",
+    style = "width: 100%",
+    tags$label(
       tagList(icon("envelope"), "email"),
       `for` = "email"
     ),

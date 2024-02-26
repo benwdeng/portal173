@@ -79,6 +79,7 @@ source("modules/mod_overview_create_new_matter.R")
 source("modules/mod_overview_change_matter_status.R")
 source("modules/mod_overview_view_edit_matter.R")
 source("modules/mod_overview_upload_document.R")
+source("modules/mod_overview_accept_reject.R")
 source("modules/mod_portal173_view_draft.R")
 source("modules/mod_permitholder.R")
 source("modules/mod_about_us.R")
@@ -124,12 +125,18 @@ type_of_document <- c("Certificate/s of Title", "Planning Permits",
                       "Company search", "Plan of Subdivision", "Power of Attorney",
                       "Other documents")
 
+# Example of user-council mapping
+user_council_mapping <- list(
+  "ben@frontya.com" = "Melbourne City Council"
+)
+
+
 
 #### Settings ####
 # ---- Metadata ----
 META <- list(
   # Name of the app, used in the browser/tab title
-  name        = "The Online Planning Hub",
+  name        = "The Online Planning Hub - Council - Melbourne City Council",
   # A description of the app, used in social media cards
   description = "Dashboard build for Portal 173",
   # Link to the app, used in social media cards
@@ -139,7 +146,7 @@ META <- list(
   # The name of the conference or organization
   conf_org    = "TE Company",
   # App title, long, shown when sidebar is open, HTML is valid
-  logo_lg     = "<strong>The Online Planning Hub</strong>",
+  logo_lg     = "<strong>The Online Planning Hub - Council - Melbourne City Council</strong>",
   # App title, short, shown when sidebar is collapsed, HTML is valid
   logo_mini   = "<em>rs</em><strong>c</strong>",
   # Icon for box with count of conference-related tweets
